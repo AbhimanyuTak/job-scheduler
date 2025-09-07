@@ -1,0 +1,660 @@
+openapi: 3.0.3
+info:
+  title: Job Scheduler API
+  description: |
+    A distributed job scheduler that supports CRON-based scheduling with extended second-level precision.
+    
+    ## Features
+    - Extended CRON Support: Parse CRON expressions with seconds (e.g., "31 10-15 1 * * MON-FRI")
+    - Execution Types: Support for AT_LEAST_ONCE and AT_MOST_ONCE execution guarantees
+    - Job Management: Create, delete, and track job execution history
+    - High Performance: Designed to handle 10k+ jobs per second
+    - Fault Tolerant: Built-in retry logic and error handling
+    - Soft Delete: Jobs can be deactivated without losing history
+    
+  version: 1.0.0
+  contact:
+    name: Job Scheduler API
+    email: support@example.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: http://localhost:8080
+    description: Development server
+  - url: https://api.jobscheduler.com
+    description: Production server
+
+paths:
+  /health:
+    get:
+      summary: Health Check
+      description: Check if the service is healthy and running
+      operationId: getHealth
+      tags:
+        - Health
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "healthy"
+                required:
+                  - status
+
+  /api/v1/jobs:
+    post:
+      summary: Create Job
+      description: Create a new scheduled job
+      operationId: createJob
+      tags:
+        - Jobs
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateJobRequest'
+            examples:
+              everyMinute:
+                summary: Every minute job
+                value:
+                  schedule: "0 * * * * *"
+                  api: "https://api.example.com/webhook"
+                  type: "AT_LEAST_ONCE"
+                  isRecurring: true
+                  description: "Send heartbeat every minute"
+                  maxRetryCount: 3
+              specificTime:
+                summary: Specific time job
+                value:
+                  schedule: "31 10-15 1 * * MON-FRI"
+                  api: "https://api.example.com/daily-report"
+                  type: "AT_MOST_ONCE"
+                  isRecurring: true
+                  description: "Generate daily report at 1:10-1:15 AM on weekdays"
+                  maxRetryCount: 5
+      responses:
+        '201':
+          description: Job created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateJobResponse'
+        '400':
+          description: Invalid request data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    get:
+      summary: List Jobs
+      description: Get all active jobs
+      operationId: listJobs
+      tags:
+        - Jobs
+      parameters:
+        - name: limit
+          in: query
+          description: Maximum number of jobs to return
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 1000
+            default: 100
+        - name: offset
+          in: query
+          description: Number of jobs to skip
+          required: false
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: List of jobs
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  jobs:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Job'
+                  total:
+                    type: integer
+                    description: Total number of jobs
+                  limit:
+                    type: integer
+                    description: Number of jobs returned
+                  offset:
+                    type: integer
+                    description: Number of jobs skipped
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/jobs/{jobId}:
+    get:
+      summary: Get Job
+      description: Get a specific job by ID
+      operationId: getJob
+      tags:
+        - Jobs
+      parameters:
+        - name: jobId
+          in: path
+          required: true
+          description: Job ID
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Job details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Job'
+        '404':
+          description: Job not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    delete:
+      summary: Delete Job
+      description: Soft delete a job (set is_active to false)
+      operationId: deleteJob
+      tags:
+        - Jobs
+      parameters:
+        - name: jobId
+          in: path
+          required: true
+          description: Job ID
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Job deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Job deleted successfully"
+        '404':
+          description: Job not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    patch:
+      summary: Update Job
+      description: Update job properties
+      operationId: updateJob
+      tags:
+        - Jobs
+      parameters:
+        - name: jobId
+          in: path
+          required: true
+          description: Job ID
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateJobRequest'
+      responses:
+        '200':
+          description: Job updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Job'
+        '404':
+          description: Job not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '400':
+          description: Invalid request data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+
+  /api/v1/jobs/{jobId}/history:
+    get:
+      summary: Get Job Execution History
+      description: Get execution history for a specific job
+      operationId: getJobHistory
+      tags:
+        - Jobs
+      parameters:
+        - name: jobId
+          in: path
+          required: true
+          description: Job ID
+          schema:
+            type: integer
+            format: int64
+        - name: limit
+          in: query
+          description: Maximum number of executions to return
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 1000
+            default: 10
+        - name: status
+          in: query
+          description: Filter by execution status
+          required: false
+          schema:
+            $ref: '#/components/schemas/ExecutionStatus'
+      responses:
+        '200':
+          description: Job execution history
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  executions:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/JobExecution'
+                  total:
+                    type: integer
+                    description: Total number of executions
+                  limit:
+                    type: integer
+                    description: Number of executions returned
+        '404':
+          description: Job not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/jobs/{jobId}/schedule:
+    get:
+      summary: Get Job Schedule
+      description: Get the next execution time for a job
+      operationId: getJobSchedule
+      tags:
+        - Jobs
+      parameters:
+        - name: jobId
+          in: path
+          required: true
+          description: Job ID
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Job schedule information
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JobSchedule'
+        '404':
+          description: Job or schedule not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+
+components:
+  schemas:
+    Job:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          description: Unique job identifier
+          example: 1
+        schedule:
+          type: string
+          description: CRON expression with seconds support
+          example: "31 10-15 1 * * MON-FRI"
+          pattern: '^(\*|([0-5]?\d)) (\*|([01]?\d|2[0-3])) (\*|([012]?\d|3[01])) (\*|([0]?\d|1[0-2])) (\*|([0-6]))$'
+        api:
+          type: string
+          format: uri
+          description: HTTP endpoint to call when job executes
+          example: "https://api.example.com/webhook"
+        type:
+          $ref: '#/components/schemas/JobType'
+        isRecurring:
+          type: boolean
+          description: Whether the job repeats
+          example: true
+        isActive:
+          type: boolean
+          description: Whether the job is active (not soft-deleted)
+          example: true
+        description:
+          type: string
+          description: Human-readable description of the job
+          example: "Send daily report"
+        maxRetryCount:
+          type: integer
+          description: Maximum number of retry attempts
+          minimum: 0
+          maximum: 10
+          example: 3
+        createdAt:
+          type: string
+          format: date-time
+          description: When the job was created
+          example: "2025-01-06T10:30:00Z"
+        updatedAt:
+          type: string
+          format: date-time
+          description: When the job was last updated
+          example: "2025-01-06T10:30:00Z"
+      required:
+        - id
+        - schedule
+        - api
+        - type
+        - isRecurring
+        - isActive
+        - maxRetryCount
+        - createdAt
+        - updatedAt
+
+    JobType:
+      type: string
+      enum:
+        - AT_LEAST_ONCE
+        - AT_MOST_ONCE
+      description: |
+        - AT_LEAST_ONCE: Job will be retried on failure until it succeeds or max retries reached
+        - AT_MOST_ONCE: Job will be executed at most once, no retries on failure
+      example: "AT_LEAST_ONCE"
+
+    CreateJobRequest:
+      type: object
+      properties:
+        schedule:
+          type: string
+          description: CRON expression with seconds support
+          example: "31 10-15 1 * * MON-FRI"
+        api:
+          type: string
+          format: uri
+          description: HTTP endpoint to call when job executes
+          example: "https://api.example.com/webhook"
+        type:
+          $ref: '#/components/schemas/JobType'
+        isRecurring:
+          type: boolean
+          description: Whether the job repeats
+          default: true
+          example: true
+        description:
+          type: string
+          description: Human-readable description of the job
+          example: "Send daily report"
+        maxRetryCount:
+          type: integer
+          description: Maximum number of retry attempts
+          minimum: 0
+          maximum: 10
+          default: 3
+          example: 3
+      required:
+        - schedule
+        - api
+        - type
+
+    UpdateJobRequest:
+      type: object
+      properties:
+        schedule:
+          type: string
+          description: CRON expression with seconds support
+          example: "0 */5 * * * *"
+        api:
+          type: string
+          format: uri
+          description: HTTP endpoint to call when job executes
+          example: "https://api.example.com/webhook"
+        type:
+          $ref: '#/components/schemas/JobType'
+        isRecurring:
+          type: boolean
+          description: Whether the job repeats
+          example: true
+        description:
+          type: string
+          description: Human-readable description of the job
+          example: "Send updated report"
+        maxRetryCount:
+          type: integer
+          description: Maximum number of retry attempts
+          minimum: 0
+          maximum: 10
+          example: 5
+
+    CreateJobResponse:
+      type: object
+      properties:
+        jobId:
+          type: integer
+          format: int64
+          description: ID of the created job
+          example: 1
+        message:
+          type: string
+          description: Success message
+          example: "Job created successfully"
+      required:
+        - jobId
+        - message
+
+    JobExecution:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          description: Unique execution identifier
+          example: 1
+        jobId:
+          type: integer
+          format: int64
+          description: ID of the job that was executed
+          example: 1
+        status:
+          $ref: '#/components/schemas/ExecutionStatus'
+        error:
+          type: string
+          description: Error message if execution failed
+          example: "Connection timeout"
+        executionTime:
+          type: string
+          format: date-time
+          description: When the job was executed
+          example: "2025-01-06T10:30:00Z"
+        executionDuration:
+          type: integer
+          description: Execution duration in milliseconds
+          example: 1500
+        retryCount:
+          type: integer
+          description: Number of retry attempts
+          minimum: 0
+          example: 1
+        createdAt:
+          type: string
+          format: date-time
+          description: When the execution record was created
+          example: "2025-01-06T10:30:00Z"
+        updatedAt:
+          type: string
+          format: date-time
+          description: When the execution record was last updated
+          example: "2025-01-06T10:30:00Z"
+      required:
+        - id
+        - jobId
+        - status
+        - executionTime
+        - retryCount
+        - createdAt
+        - updatedAt
+
+    ExecutionStatus:
+      type: string
+      enum:
+        - SCHEDULED
+        - RUNNING
+        - SUCCESS
+        - FAILED
+      description: |
+        - SCHEDULED: Job is scheduled for execution
+        - RUNNING: Job is currently being executed
+        - SUCCESS: Job executed successfully
+        - FAILED: Job execution failed
+      example: "SUCCESS"
+
+    JobSchedule:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          description: Unique schedule identifier
+          example: 1
+        jobId:
+          type: integer
+          format: int64
+          description: ID of the job
+          example: 1
+        nextExecutionTime:
+          type: string
+          format: date-time
+          description: When the job will next execute
+          example: "2025-01-06T11:00:00Z"
+        createdAt:
+          type: string
+          format: date-time
+          description: When the schedule was created
+          example: "2025-01-06T10:30:00Z"
+      required:
+        - id
+        - jobId
+        - nextExecutionTime
+        - createdAt
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+          description: Error message
+          example: "Job not found"
+        code:
+          type: string
+          description: Error code
+          example: "JOB_NOT_FOUND"
+        details:
+          type: object
+          description: Additional error details
+          additionalProperties: true
+      required:
+        - error
+
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+      description: API key for authentication
+
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT token for authentication
+
+security:
+  - ApiKeyAuth: []
+  - BearerAuth: []
+
+tags:
+  - name: Health
+    description: Health check endpoints
+  - name: Jobs
+    description: Job management operations
