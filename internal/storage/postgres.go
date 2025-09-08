@@ -114,31 +114,37 @@ func (s *PostgresStorage) DeleteJobSchedule(jobID uint) error {
 }
 
 func (s *PostgresStorage) GetJobsReadyForExecution(limit int) ([]*models.Job, []*models.JobSchedule, error) {
-	var schedules []*models.JobSchedule
-	var jobs []*models.Job
+	var results []struct {
+		models.Job
+		models.JobSchedule
+	}
 
-	// Get schedules ready for execution
-	result := s.db.Where("next_execution_time <= ?", time.Now()).
-		Order("next_execution_time ASC").
+	// Use JOIN to get only schedules for active jobs that are ready for execution
+	result := s.db.Table("job_schedules").
+		Select("jobs.*, job_schedules.*").
+		Joins("JOIN jobs ON job_schedules.job_id = jobs.id").
+		Where("job_schedules.next_execution_time <= ? AND jobs.is_active = ? AND job_schedules.deleted_at IS NULL", time.Now(), true).
+		Order("job_schedules.next_execution_time ASC").
 		Limit(limit).
-		Find(&schedules)
+		Scan(&results)
+
 	if result.Error != nil {
 		return nil, nil, result.Error
 	}
 
-	if len(schedules) == 0 {
-		return jobs, schedules, nil
+	if len(results) == 0 {
+		return []*models.Job{}, []*models.JobSchedule{}, nil
 	}
 
-	// Get corresponding jobs
-	var jobIDs []uint
-	for _, schedule := range schedules {
-		jobIDs = append(jobIDs, schedule.JobID)
-	}
+	// Separate jobs and schedules
+	var jobs []*models.Job
+	var schedules []*models.JobSchedule
 
-	result = s.db.Where("id IN ? AND is_active = ?", jobIDs, true).Find(&jobs)
-	if result.Error != nil {
-		return nil, nil, result.Error
+	for _, result := range results {
+		job := result.Job
+		schedule := result.JobSchedule
+		jobs = append(jobs, &job)
+		schedules = append(schedules, &schedule)
 	}
 
 	return jobs, schedules, nil

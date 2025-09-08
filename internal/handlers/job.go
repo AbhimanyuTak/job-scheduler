@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"log"
 	"net/http"
 	"strconv"
 
@@ -283,7 +284,9 @@ func (h *JobHandler) DeleteJob(c *gin.Context) {
 		return
 	}
 
-	if err := h.storage.DeleteJob(uint(id)); err != nil {
+	// First, check if job exists
+	_, err = h.storage.GetJob(uint(id))
+	if err != nil {
 		if err == storage.ErrJobNotFound {
 			c.JSON(http.StatusNotFound, gin.H{
 				"error": "Job not found",
@@ -291,10 +294,26 @@ func (h *JobHandler) DeleteJob(c *gin.Context) {
 			return
 		}
 		c.JSON(http.StatusInternalServerError, gin.H{
+			"error":   "Failed to get job",
+			"details": err.Error(),
+		})
+		return
+	}
+
+	// Delete the job (soft delete - sets is_active = false)
+	if err := h.storage.DeleteJob(uint(id)); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
 			"error":   "Failed to delete job",
 			"details": err.Error(),
 		})
 		return
+	}
+
+	// Also delete the job schedule to prevent further executions
+	if err := h.storage.DeleteJobSchedule(uint(id)); err != nil {
+		// Log the error but don't fail the request since the job is already deleted
+		// This ensures the job is marked as inactive even if schedule deletion fails
+		log.Printf("Warning: Failed to delete job schedule for job %d: %v", id, err)
 	}
 
 	c.JSON(http.StatusOK, gin.H{

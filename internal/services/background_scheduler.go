@@ -27,7 +27,7 @@ func NewBackgroundScheduler(schedulerService *SchedulerService) *BackgroundSched
 // Start begins the background scheduler
 func (bs *BackgroundScheduler) Start(interval time.Duration) {
 	bs.ticker = time.NewTicker(interval)
-	log.Printf("Background scheduler started with interval: %v", interval)
+	log.Printf("Background scheduler started with interval: %v (high-throughput mode)", interval)
 
 	go func() {
 		for {
@@ -36,7 +36,8 @@ func (bs *BackgroundScheduler) Start(interval time.Duration) {
 				log.Println("Background scheduler stopped")
 				return
 			case <-bs.ticker.C:
-				if err := bs.schedulerService.ProcessReadyJobs(bs.ctx, 100); err != nil {
+				// Process more jobs per batch for higher throughput
+				if err := bs.schedulerService.ProcessReadyJobs(bs.ctx, 1000); err != nil {
 					log.Printf("Error processing ready jobs: %v", err)
 				}
 			}

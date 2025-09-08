@@ -18,7 +18,7 @@ type Job struct {
 	Schedule      string         `json:"schedule" gorm:"size:100;not null"`
 	API           string         `json:"api" gorm:"type:text;not null"`
 	Type          JobType        `json:"type" gorm:"size:20;not null"`
-	IsRecurring   bool           `json:"isRecurring" gorm:"default:true"`
+	IsRecurring   bool           `json:"isRecurring" gorm:"default:false"`
 	IsActive      bool           `json:"isActive" gorm:"default:true;index"`
 	Description   string         `json:"description" gorm:"type:text"`
 	MaxRetryCount int            `json:"maxRetryCount" gorm:"default:3"`
