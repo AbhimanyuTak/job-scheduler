@@ -7,10 +7,9 @@ info:
     ## Features
     - Extended CRON Support: Parse CRON expressions with seconds (e.g., "31 10-15 1 * * MON-FRI")
     - Execution Types: Support for AT_LEAST_ONCE and AT_MOST_ONCE execution guarantees
-    - Job Management: Create, delete, and track job execution history
+    - Job Management: Create and track job execution history
     - High Performance: Designed to handle 10k+ jobs per second
     - Fault Tolerant: Built-in retry logic and error handling
-    - Soft Delete: Jobs can be deactivated without losing history
     
   version: 1.0.0
   contact:
@@ -187,92 +186,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
 
-    delete:
-      summary: Delete Job
-      description: Soft delete a job (set is_active to false)
-      operationId: deleteJob
-      tags:
-        - Jobs
-      parameters:
-        - name: jobId
-          in: path
-          required: true
-          description: Job ID
-          schema:
-            type: integer
-            format: int64
-      responses:
-        '200':
-          description: Job deleted successfully
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    example: true
-                  message:
-                    type: string
-                    example: "Job deleted successfully"
-        '404':
-          description: Job not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '500':
-          description: Internal server error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
 
-    patch:
-      summary: Update Job
-      description: Update job properties
-      operationId: updateJob
-      tags:
-        - Jobs
-      parameters:
-        - name: jobId
-          in: path
-          required: true
-          description: Job ID
-          schema:
-            type: integer
-            format: int64
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/UpdateJobRequest'
-      responses:
-        '200':
-          description: Job updated successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Job'
-        '404':
-          description: Job not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '400':
-          description: Invalid request data
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '500':
-          description: Internal server error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
 
 
   /api/v1/jobs/{jobId}/history:
@@ -478,34 +392,6 @@ components:
         - api
         - type
 
-    UpdateJobRequest:
-      type: object
-      properties:
-        schedule:
-          type: string
-          description: CRON expression with seconds support
-          example: "0 */5 * * * *"
-        api:
-          type: string
-          format: uri
-          description: HTTP endpoint to call when job executes
-          example: "https://api.example.com/webhook"
-        type:
-          $ref: '#/components/schemas/JobType'
-        isRecurring:
-          type: boolean
-          description: Whether the job repeats
-          example: true
-        description:
-          type: string
-          description: Human-readable description of the job
-          example: "Send updated report"
-        maxRetryCount:
-          type: integer
-          description: Maximum number of retry attempts
-          minimum: 0
-          maximum: 10
-          example: 5
 
     CreateJobResponse:
       type: object

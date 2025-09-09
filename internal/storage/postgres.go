@@ -40,17 +40,6 @@ func (s *PostgresStorage) GetJob(id uint) (*models.Job, error) {
 	return &job, nil
 }
 
-func (s *PostgresStorage) DeleteJob(id uint) error {
-	result := s.db.Model(&models.Job{}).Where("id = ? AND is_active = ?", id, true).Update("is_active", false)
-	if result.Error != nil {
-		return result.Error
-	}
-	if result.RowsAffected == 0 {
-		return ErrJobNotFound
-	}
-	return nil
-}
-
 func (s *PostgresStorage) GetAllJobs() ([]*models.Job, error) {
 	var jobs []*models.Job
 	result := s.db.Where("is_active = ?", true).Find(&jobs)
@@ -58,14 +47,6 @@ func (s *PostgresStorage) GetAllJobs() ([]*models.Job, error) {
 		return nil, result.Error
 	}
 	return jobs, nil
-}
-
-func (s *PostgresStorage) UpdateJob(job *models.Job) error {
-	result := s.db.Save(job)
-	if result.Error != nil {
-		return result.Error
-	}
-	return nil
 }
 
 // JobSchedule operations

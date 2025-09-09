@@ -233,7 +233,7 @@ func (ws *WorkerService) handleFailedJob(job *models.QueueJob, execution *models
 func (ws *WorkerService) processRetryQueue() {
 	defer ws.wg.Done()
 
-	ticker := time.NewTicker(30 * time.Second) // Check every 30 seconds
+	ticker := time.NewTicker(10 * time.Second) // Check every 10 seconds for faster cleanup
 	defer ticker.Stop()
 
 	for {
@@ -249,8 +249,8 @@ func (ws *WorkerService) processRetryQueue() {
 				log.Printf("Error processing retry queue: %v", err)
 			}
 
-			// Cleanup stale jobs every 5 minutes
-			if err := ws.jobQueue.CleanupStaleJobs(2 * time.Hour); err != nil {
+			// Cleanup stale jobs every 10 seconds
+			if err := ws.jobQueue.CleanupStaleJobs(1 * time.Hour); err != nil {
 				log.Printf("Error cleaning up stale jobs: %v", err)
 			}
 		}

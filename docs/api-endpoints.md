@@ -93,32 +93,6 @@ GET /api/v1/jobs/{jobId}
 }
 ```
 
-#### Update Job
-```
-PATCH /api/v1/jobs/{jobId}
-```
-**Request Body:**
-```json
-{
-  "schedule": "0 */5 * * * *",
-  "description": "Updated description",
-  "maxRetryCount": 5
-}
-```
-
-#### Delete Job (Soft Delete)
-```
-DELETE /api/v1/jobs/{jobId}
-```
-**Response:**
-```json
-{
-  "success": true,
-  "message": "Job deleted successfully"
-}
-```
-
-
 #### Get Job Schedule
 ```
 GET /api/v1/jobs/{jobId}/schedule

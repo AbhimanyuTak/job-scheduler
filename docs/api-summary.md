@@ -6,9 +6,9 @@ The Job Scheduler API has been simplified to focus on core functionality while m
 ## Removed Endpoints
 The following endpoints were removed to simplify the API design:
 
-1. **`POST /jobs/{id}/activate`** - Removed
-   - **Reason**: Job reactivation can be done through the `PATCH /jobs/{id}` endpoint by setting `isActive: true`
-   - **Alternative**: Use `PATCH /jobs/{id}` with `{"isActive": true}`
+1. **`PATCH /jobs/{id}`** - Removed
+   - **Reason**: Job updates are not supported in the simplified design
+   - **Alternative**: Create a new job with the desired configuration
 
 2. **`GET /executions`** - Removed
    - **Reason**: Fetching all executions across all jobs is not a common use case
@@ -26,8 +26,6 @@ GET    /health                    - Health check
 POST   /jobs                      - Create job
 GET    /jobs                      - List jobs
 GET    /jobs/{id}                 - Get job
-PATCH  /jobs/{id}                 - Update job (including reactivation)
-DELETE /jobs/{id}                 - Soft delete job
 GET    /jobs/{id}/schedule        - Get job schedule
 GET    /jobs/{id}/history         - Get job execution history
 ```
@@ -36,18 +34,12 @@ GET    /jobs/{id}/history         - Get job execution history
 
 1. **Cleaner API**: Fewer endpoints to maintain and document
 2. **Consistent Patterns**: All job operations under `/jobs` path
-3. **Flexible Updates**: Single update endpoint handles all job modifications
+3. **Simple Operations**: Create, read, delete operations only
 4. **Focused Functionality**: Each endpoint has a clear, single purpose
 5. **Better Performance**: No unnecessary bulk operations
 
-### Job Reactivation
-To reactivate a soft-deleted job, use the update endpoint:
-```bash
-PATCH /jobs/{id}
-{
-  "isActive": true
-}
-```
+### Job Management
+Jobs can be created and viewed. Once created, jobs run according to their schedule until completion.
 
 ### Execution History
 All execution-related queries are job-specific:

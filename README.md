@@ -6,7 +6,7 @@ A distributed job scheduler built with Go that supports CRON-based scheduling wi
 
 - **Extended CRON Support**: Parse CRON expressions with seconds (e.g., "31 10-15 1 * * MON-FRI")
 - **Execution Types**: Support for AT_LEAST_ONCE and AT_MOST_ONCE execution guarantees
-- **Job Management**: Create, delete, and track job execution history
+- **Job Management**: Create and track job execution history
 - **High Performance**: Designed to handle 10k+ jobs per second
 - **Fault Tolerant**: Built-in retry logic and error handling
 - **Redis Queue System**: Distributed job processing with horizontal scaling
@@ -297,8 +297,6 @@ All services include health checks:
 - `POST /api/v1/jobs` - Create a new job
 - `GET /api/v1/jobs` - List all jobs
 - `GET /api/v1/jobs/{id}` - Get job details
-- `PATCH /api/v1/jobs/{id}` - Update job
-- `DELETE /api/v1/jobs/{id}` - Soft delete job (can be reactivated by updating isActive)
 - `GET /api/v1/jobs/{id}/schedule` - Get job schedule
 - `GET /api/v1/jobs/{id}/history` - Get job execution history
 

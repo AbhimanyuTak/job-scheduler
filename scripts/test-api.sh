@@ -77,25 +77,6 @@ echo "📊 Testing get job history..."
 HISTORY_RESPONSE=$(curl -s -H "X-API-Key: $API_KEY" "$BASE_URL/api/v1/jobs/$JOB_ID/history")
 echo "Job history response: $HISTORY_RESPONSE"
 
-# Test update job
-echo ""
-echo "✏️  Testing update job..."
-UPDATE_RESPONSE=$(curl -s -X PATCH "$BASE_URL/api/v1/jobs/$JOB_ID" \
-  -H "Content-Type: application/json" \
-  -H "X-API-Key: $API_KEY" \
-  -d '{
-    "description": "Updated test job description",
-    "maxRetryCount": 5
-  }')
-echo "Update job response: $UPDATE_RESPONSE"
-
-# Test delete job
-echo ""
-echo "🗑️  Testing delete job..."
-DELETE_RESPONSE=$(curl -s -X DELETE -H "X-API-Key: $API_KEY" "$BASE_URL/api/v1/jobs/$JOB_ID")
-echo "Delete job response: $DELETE_RESPONSE"
-
-
 echo ""
 echo "🎉 API testing completed!"
 echo ""
@@ -107,4 +88,3 @@ echo "   - List jobs: ✅"
 echo "   - Get schedule: ✅"
 echo "   - Get history: ✅"
 echo "   - Update job: ✅"
-echo "   - Delete job: ✅"

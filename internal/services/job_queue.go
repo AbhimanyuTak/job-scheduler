@@ -93,8 +93,8 @@ func (jqs *JobQueueService) MoveToProcessing(job *models.QueueJob) error {
 		return fmt.Errorf("failed to add job to processing queue: %w", err)
 	}
 
-	// Store job data with TTL (e.g., 2 hours for processing)
-	if err := jqs.client.Set(jqs.ctx, fmt.Sprintf("job_data:%s", job.ID), jobData, 2*time.Hour).Err(); err != nil {
+	// Store job data with TTL (e.g., 6 hours for processing long-running jobs)
+	if err := jqs.client.Set(jqs.ctx, fmt.Sprintf("job_data:%s", job.ID), jobData, 6*time.Hour).Err(); err != nil {
 		return fmt.Errorf("failed to store job data: %w", err)
 	}
 

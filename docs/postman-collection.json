@@ -118,41 +118,6 @@
           "response": []
         },
         {
-          "name": "Update Job",
-          "request": {
-            "method": "PATCH",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"schedule\": \"0 */5 * * * *\",\n  \"description\": \"Updated description\",\n  \"maxRetryCount\": 5\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/jobs/1",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "jobs", "1"]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Delete Job",
-          "request": {
-            "method": "DELETE",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/jobs/1",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "jobs", "1"]
-            }
-          },
-          "response": []
-        },
-        {
           "name": "Get Job Schedule",
           "request": {
             "method": "GET",

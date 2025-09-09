@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"log"
 	"net/http"
 	"strconv"
 
@@ -195,130 +194,6 @@ func (h *JobHandler) ListJobs(c *gin.Context) {
 		"total":  total,
 		"limit":  limit,
 		"offset": offset,
-	})
-}
-
-// UpdateJob handles PATCH /jobs/:id
-func (h *JobHandler) UpdateJob(c *gin.Context) {
-	idStr := c.Param("id")
-	id, err := strconv.ParseUint(idStr, 10, 32)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Invalid job ID",
-		})
-		return
-	}
-
-	// Get existing job
-	job, err := h.storage.GetJob(uint(id))
-	if err != nil {
-		if err == storage.ErrJobNotFound {
-			c.JSON(http.StatusNotFound, gin.H{
-				"error": "Job not found",
-			})
-			return
-		}
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error":   "Failed to get job",
-			"details": err.Error(),
-		})
-		return
-	}
-
-	// Parse update request
-	var updateReq map[string]interface{}
-	if err := c.ShouldBindJSON(&updateReq); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error":   "Invalid request payload",
-			"details": err.Error(),
-		})
-		return
-	}
-
-	// Update fields if provided
-	if description, ok := updateReq["description"].(string); ok {
-		job.Description = description
-	}
-	if maxRetryCount, ok := updateReq["maxRetryCount"].(float64); ok {
-		job.MaxRetryCount = int(maxRetryCount)
-	}
-	if isActive, ok := updateReq["isActive"].(bool); ok {
-		job.IsActive = isActive
-	}
-	if schedule, ok := updateReq["schedule"].(string); ok {
-		job.Schedule = schedule
-	}
-	if api, ok := updateReq["api"].(string); ok {
-		job.API = api
-	}
-	if jobType, ok := updateReq["type"].(string); ok {
-		job.Type = models.JobType(jobType)
-	}
-	if isRecurring, ok := updateReq["isRecurring"].(bool); ok {
-		job.IsRecurring = isRecurring
-	}
-
-	// Save updated job
-	if err := h.storage.UpdateJob(job); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error":   "Failed to update job",
-			"details": err.Error(),
-		})
-		return
-	}
-
-	c.JSON(http.StatusOK, gin.H{
-		"success": true,
-		"message": "Job updated successfully",
-	})
-}
-
-// DeleteJob handles DELETE /jobs/:id
-func (h *JobHandler) DeleteJob(c *gin.Context) {
-	idStr := c.Param("id")
-	id, err := strconv.ParseUint(idStr, 10, 32)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Invalid job ID",
-		})
-		return
-	}
-
-	// First, check if job exists
-	_, err = h.storage.GetJob(uint(id))
-	if err != nil {
-		if err == storage.ErrJobNotFound {
-			c.JSON(http.StatusNotFound, gin.H{
-				"error": "Job not found",
-			})
-			return
-		}
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error":   "Failed to get job",
-			"details": err.Error(),
-		})
-		return
-	}
-
-	// Delete the job (soft delete - sets is_active = false)
-	if err := h.storage.DeleteJob(uint(id)); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error":   "Failed to delete job",
-			"details": err.Error(),
-		})
-		return
-	}
-
-	// Also delete the job schedule to prevent further executions
-	if err := h.storage.DeleteJobSchedule(uint(id)); err != nil {
-		// Log the error but don't fail the request since the job is already deleted
-		// This ensures the job is marked as inactive even if schedule deletion fails
-		log.Printf("Warning: Failed to delete job schedule for job %d: %v", id, err)
-	}
-
-	c.JSON(http.StatusOK, gin.H{
-		"success": true,
-		"message": "Job deleted successfully",
 	})
 }
 
