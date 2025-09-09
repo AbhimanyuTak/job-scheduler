@@ -7,7 +7,7 @@ A distributed job scheduler built with Go that supports CRON-based scheduling wi
 - **Extended CRON Support**: Parse CRON expressions with seconds (e.g., "31 10-15 1 * * MON-FRI")
 - **Execution Types**: Support for AT_LEAST_ONCE and AT_MOST_ONCE execution guarantees
 - **Job Management**: Create and track job execution history
-- **High Performance**: Designed to handle 10k+ jobs per second
+- **High Performance**: Designed to handle 1k+ jobs per second
 - **Fault Tolerant**: Built-in retry logic and error handling
 - **Redis Queue System**: Distributed job processing with horizontal scaling
 - **Long-Running Tasks**: Support for tasks up to 90 seconds duration
