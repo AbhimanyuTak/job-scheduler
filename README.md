@@ -13,6 +13,26 @@ A distributed job scheduler built with Go that supports CRON-based scheduling wi
 - **Long-Running Tasks**: Support for tasks up to 90 seconds duration
 - **Auto-Scaling Ready**: Worker containers can be scaled based on queue depth
 
+## Architecture
+
+```
+┌─────────────┐    ┌─────────────┐    ┌─────────────┐
+│   Client    │───▶│ API Server  │───▶│ PostgreSQL  │
+└─────────────┘    └─────────────┘    └─────────────┘
+                           │
+                           ▼
+                   ┌─────────────┐
+                   │    Redis    │
+                   │   (Queue)   │
+                   └─────────────┘
+                           │
+                           ▼
+                   ┌─────────────┐
+                   │   Workers   │
+                   │ (Scalable)  │
+                   └─────────────┘
+```
+
 ## Project Structure
 
 ```
