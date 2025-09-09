@@ -47,20 +47,23 @@ services:
       REDIS_PORT: 6379
       REDIS_PASSWORD: ""
       REDIS_DB: 0
-      GIN_MODE: release
+      GIN_MODE: debug
       SERVER_PORT: 8080
       SERVER_HOST: 0.0.0.0
-      LOG_LEVEL: info
+      LOG_LEVEL: debug
       LOG_FORMAT: json
       SCHEDULER_POLL_INTERVAL: 5s
       SCHEDULER_BATCH_SIZE: 100
       SCHEDULER_HTTP_TIMEOUT: 30s
-      ENVIRONMENT: production
+      ENVIRONMENT: development
     depends_on:
       postgres:
         condition: service_healthy
       redis:
         condition: service_healthy
+    volumes:
+      - .:/app
+    working_dir: /app
     restart: unless-stopped
 
   worker:
@@ -78,26 +81,22 @@ services:
       REDIS_PORT: 6379
       REDIS_PASSWORD: ""
       REDIS_DB: 0
-      WORKER_POOL_SIZE: 10
+      WORKER_POOL_SIZE: 5
       WORKER_HTTP_TIMEOUT: 90
-      LOG_LEVEL: info
+      LOG_LEVEL: debug
       LOG_FORMAT: json
-      ENVIRONMENT: production
+      ENVIRONMENT: development
     depends_on:
       postgres:
         condition: service_healthy
       redis:
         condition: service_healthy
+    volumes:
+      - .:/app
+    working_dir: /app
     restart: unless-stopped
     deploy:
-      replicas: 3
-      resources:
-        limits:
-          cpus: '0.5'
-          memory: 512M
-        reservations:
-          cpus: '0.25'
-          memory: 256M
+      replicas: 2
 
 volumes:
   postgres_data:

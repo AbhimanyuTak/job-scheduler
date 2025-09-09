@@ -1,7 +1,7 @@
-# Database Schema Design - Version 1.0
+# Database Schema
 
 ## Overview
-This document outlines the PostgreSQL database schema for the distributed job scheduler, designed to support high-throughput job scheduling with proper durability and consistency.
+PostgreSQL schema for the job scheduler with support for high-throughput scheduling and execution tracking.
 
 ## Database Tables
 

@@ -42,8 +42,8 @@ CREATE_RESPONSE=$(curl -s -X POST "$BASE_URL/api/v1/jobs" \
 
 echo "Create job response: $CREATE_RESPONSE"
 
-# Extract job ID from response (assuming it returns {"jobId": 1, "message": "..."})
-JOB_ID=$(echo "$CREATE_RESPONSE" | grep -o '"jobId":[0-9]*' | cut -d':' -f2)
+# Extract job ID from response (assuming it returns {"id": 1, "message": "..."})
+JOB_ID=$(echo "$CREATE_RESPONSE" | grep -o '"id":[0-9]*' | cut -d':' -f2)
 
 if [ -z "$JOB_ID" ]; then
     echo "❌ Failed to create job or extract job ID"

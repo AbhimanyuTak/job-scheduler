@@ -58,62 +58,65 @@ check_services() {
 
 # Run tests based on argument
 run_tests() {
+    # Change to parent directory to run tests
+    cd "$(dirname "$0")/.."
+    
     case "$1" in
         "unit")
             log_info "Running unit tests..."
-            make -f Makefile.test test-unit
+            make -f test/Makefile.test test-unit
             ;;
         "integration")
             log_info "Running integration tests..."
             check_services
-            make -f Makefile.test test-integration
+            make -f test/Makefile.test test-integration
             ;;
         "e2e")
             log_info "Running end-to-end tests..."
             check_services
-            make -f Makefile.test test-e2e
+            make -f test/Makefile.test test-e2e
             ;;
         "redis")
             log_info "Running Redis tests..."
             check_services
-            make -f Makefile.test test-redis
+            make -f test/Makefile.test test-redis
             ;;
         "all")
             log_info "Running all tests..."
-            make -f Makefile.test test-unit
+            make -f test/Makefile.test test-unit
             check_services
-            make -f Makefile.test test-integration
+            make -f test/Makefile.test test-integration
             ;;
         "quick")
             log_info "Running quick system check..."
             check_services
-            make -f Makefile.test test-quick
+            make -f test/Makefile.test test-quick
             ;;
         "coverage")
             log_info "Running tests with coverage..."
             check_services
-            make -f Makefile.test test-coverage
+            make -f test/Makefile.test test-coverage
             ;;
         "race")
             log_info "Running tests with race detection..."
             check_services
-            make -f Makefile.test test-race
+            make -f test/Makefile.test test-race
             ;;
         "benchmark")
             log_info "Running benchmark tests..."
             check_services
-            make -f Makefile.test test-benchmark
+            make -f test/Makefile.test test-benchmark
             ;;
         "clean")
             log_info "Cleaning test artifacts..."
-            make -f Makefile.test test-clean
+            make -f test/Makefile.test test-clean
             ;;
         "help"|"--help"|"-h")
             show_help
             ;;
         "")
             log_info "No test type specified. Running unit tests..."
-            make -f Makefile.test test-unit
+            make -f test/Makefile.test test-unit
             ;;
         *)
             log_error "Unknown test type: $1"

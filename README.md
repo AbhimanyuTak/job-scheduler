@@ -29,8 +29,9 @@ job_scheduler/
 │   └── utils/              # Utility functions (schedule parsing)
 ├── docs/                   # Documentation
 ├── scripts/                # Database and deployment scripts
-├── docker-compose.yml      # Production Docker setup
-├── docker-compose.dev.yml  # Development Docker setup
+├── test/                   # Test configuration and scripts
+├── tests/                  # Go test files
+├── docker-compose.yml      # Docker setup
 ├── Dockerfile              # API server container
 ├── Dockerfile.worker       # Worker container
 ├── go.mod
@@ -42,11 +43,8 @@ job_scheduler/
 ### Docker (Recommended)
 
 ```bash
-# Production
+# Start all services
 docker-compose up -d
-
-# Development (with live reload)
-docker-compose -f docker-compose.dev.yml up -d
 
 # Test
 curl http://localhost:8080/health
@@ -79,16 +77,16 @@ Key configuration options (see `config.env.example` for full list):
 
 ### Docker Files
 
-- **`docker-compose.yml`**: Production (3 workers, optimized)
-- **`docker-compose.dev.yml`**: Development (2 workers, live reload)
+- **`docker-compose.yml`**: Local development (2 workers, live reload, debug mode)
 
 ### Documentation
 
-- **[Configuration Guide](docs/configuration.md)** - Environment variables
-- **[Database Setup](docs/database-setup.md)** - PostgreSQL setup
-- **[Docker Setup](docs/docker-setup.md)** - Docker deployment
+- **[API Reference](docs/api.md)** - Complete API documentation
+- **[Setup Guide](docs/setup.md)** - Docker and manual setup
+- **[Architecture](docs/architecture.md)** - System design and components
+- **[Job Execution Types](docs/job-execution-types.md)** - AT_MOST_ONCE vs AT_LEAST_ONCE
 - **[API Spec](docs/api-spec.yaml)** - OpenAPI specification
-- **[API Endpoints](docs/api-endpoints.md)** - Quick reference
+- **[Postman Collection](docs/postman-collection.json)** - Import into Postman
 
 ### Key Endpoints
 
@@ -104,22 +102,40 @@ Key configuration options (see `config.env.example` for full list):
 
 ```bash
 # Unit tests (fast, no external dependencies)
-make -f Makefile.test test-unit
+make -f test/Makefile.test test-unit
 
 # Integration tests (requires running services)
-make -f Makefile.test test-integration
+make -f test/Makefile.test test-integration
+
+# End-to-end tests
+make -f test/Makefile.test test-e2e
 
 # With coverage
-go test -v -short -run ".*Unit" ./internal/... -timeout=30s -cover
+make -f test/Makefile.test test-coverage
 ```
 
 ### Test Types
 
 - **Unit Tests**: Fast tests with mocks (models, handlers, services)
 - **Integration Tests**: Tests with real Redis/PostgreSQL
-- **E2E Tests**: Full system testing
+- **E2E Tests**: Full system testing covering complete workflows
 
-The test suite covers job lifecycle, queue operations, error handling, and performance.
+### Test Coverage
+
+- ✅ **Job Management**: Creation, validation, types, scheduling
+- ✅ **Redis Queue**: Enqueueing, dequeuing, statistics, data integrity
+- ✅ **Worker Processing**: Execution, retries, error handling
+- ✅ **System Integration**: Health checks, API endpoints, database operations
+
+### Prerequisites
+
+```bash
+# Start services for integration tests
+docker-compose up -d
+
+# Verify services
+curl http://localhost:8080/health
+```
 
 ## Redis Queue System
 

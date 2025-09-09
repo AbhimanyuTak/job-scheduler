@@ -59,7 +59,6 @@ docker-dev:
 docker-stop:
 	@echo "Stopping Docker services..."
 	docker compose down
-	docker compose -f docker-compose.dev.yml down
 
 # Database commands
 db-setup:
@@ -69,7 +68,6 @@ db-setup:
 db-reset:
 	@echo "Resetting database..."
 	docker compose down -v
-	docker compose -f docker-compose.dev.yml down -v
 
 # API testing
 test-api:
