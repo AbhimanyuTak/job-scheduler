@@ -118,6 +118,11 @@ func (m *MockStorage) GetJobExecutions(jobID uint, limit int) ([]*models.JobExec
 	return executions, nil
 }
 
+func (m *MockStorage) GetJobExecutionInProgress(jobID uint) (*models.JobExecution, error) {
+	// For testing purposes, always return nil (no execution in progress)
+	return nil, nil
+}
+
 func TestJobHandler_CreateJob_Unit(t *testing.T) {
 	mockStorage := NewMockStorage()
 	handler := NewJobHandler(mockStorage)

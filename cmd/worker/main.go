@@ -40,8 +40,11 @@ func main() {
 	// Initialize job queue service
 	jobQueue := services.NewJobQueueService(redisClient)
 
+	// Initialize scheduler service
+	schedulerService := services.NewSchedulerService(postgresStorage, redisClient)
+
 	// Initialize worker service
-	workerService := services.NewWorkerService(jobQueue, postgresStorage)
+	workerService := services.NewWorkerService(jobQueue, postgresStorage, schedulerService)
 
 	// Start worker service
 	workerService.Start()

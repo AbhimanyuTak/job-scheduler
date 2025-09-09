@@ -122,7 +122,7 @@ func (s *SchedulerService) handleSuccessfulExecution(job *models.Job, schedule *
 
 // handleFailedExecution handles rescheduling for failed executions
 func (s *SchedulerService) handleFailedExecution(job *models.Job, schedule *models.JobSchedule) error {
-	// For non-recurring jobs, delete the schedule after failure
+	// For non-recurring jobs, delete the schedule after failure (regardless of type)
 	if !job.IsRecurring {
 		if err := s.storage.DeleteJobSchedule(job.ID); err != nil {
 			return fmt.Errorf("failed to delete schedule for failed non-recurring job: %w", err)
@@ -131,7 +131,7 @@ func (s *SchedulerService) handleFailedExecution(job *models.Job, schedule *mode
 		return nil
 	}
 
-	// For recurring jobs, reschedule normally (next occurrence)
+	// For recurring jobs, reschedule for next occurrence
 	nextExecutionTime, err := s.scheduleParser.CalculateNextExecutionFromTime(job.Schedule, schedule.NextExecutionTime)
 	if err != nil {
 		return fmt.Errorf("failed to calculate next execution time: %w", err)
@@ -139,7 +139,12 @@ func (s *SchedulerService) handleFailedExecution(job *models.Job, schedule *mode
 	if err := s.storage.UpdateJobSchedule(job.ID, nextExecutionTime); err != nil {
 		return fmt.Errorf("failed to update job schedule: %w", err)
 	}
-	log.Printf("Recurring job %d failed, rescheduled for next occurrence: %v", job.ID, nextExecutionTime)
+
+	if job.Type == models.AT_MOST_ONCE {
+		log.Printf("Recurring AT_MOST_ONCE job %d failed, rescheduled for next occurrence: %v (no retry)", job.ID, nextExecutionTime)
+	} else {
+		log.Printf("Recurring AT_LEAST_ONCE job %d failed, rescheduled for next occurrence: %v", job.ID, nextExecutionTime)
+	}
 	return nil
 }
 

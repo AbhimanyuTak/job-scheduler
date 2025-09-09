@@ -24,4 +24,5 @@ type Storage interface {
 	CreateJobExecution(execution *models.JobExecution) error
 	UpdateJobExecution(execution *models.JobExecution) error
 	GetJobExecutions(jobID uint, limit int) ([]*models.JobExecution, error)
+	GetJobExecutionInProgress(jobID uint) (*models.JobExecution, error)
 }

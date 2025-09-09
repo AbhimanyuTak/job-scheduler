@@ -51,4 +51,4 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
   CMD pgrep -f worker || exit 1
 
 # Run the worker
-CMD ["./worker"]
+CMD ./worker

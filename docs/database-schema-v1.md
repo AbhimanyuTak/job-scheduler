@@ -61,6 +61,7 @@ CREATE TABLE job_executions (
 CREATE INDEX idx_job_executions_job_id ON job_executions(job_id);
 CREATE INDEX idx_job_executions_status ON job_executions(status);
 CREATE INDEX idx_job_executions_execution_time ON job_executions(execution_time);
+
 ```
 
 ## Updated Go Models

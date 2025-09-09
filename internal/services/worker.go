@@ -18,6 +18,7 @@ import (
 type WorkerService struct {
 	jobQueue   *JobQueueService
 	storage    *storage.PostgresStorage
+	scheduler  SchedulerServiceInterface
 	httpClient *http.Client
 	workerPool chan struct{} // Semaphore for limiting concurrent workers
 	ctx        context.Context
@@ -28,7 +29,7 @@ type WorkerService struct {
 }
 
 // NewWorkerService creates a new worker service
-func NewWorkerService(jobQueue *JobQueueService, storage *storage.PostgresStorage) *WorkerService {
+func NewWorkerService(jobQueue *JobQueueService, storage *storage.PostgresStorage, scheduler SchedulerServiceInterface) *WorkerService {
 	ctx, cancel := context.WithCancel(context.Background())
 
 	// Get worker configuration from environment
@@ -36,8 +37,9 @@ func NewWorkerService(jobQueue *JobQueueService, storage *storage.PostgresStorag
 	httpTimeout := getEnvIntOrDefault("WORKER_HTTP_TIMEOUT", 90) // 90 seconds default
 
 	return &WorkerService{
-		jobQueue: jobQueue,
-		storage:  storage,
+		jobQueue:  jobQueue,
+		storage:   storage,
+		scheduler: scheduler,
 		httpClient: &http.Client{
 			Timeout: time.Duration(httpTimeout) * time.Second,
 			Transport: &http.Transport{
@@ -132,6 +134,23 @@ func (ws *WorkerService) processJob(job *models.QueueJob) {
 	log.Printf("Processing job %s (JobID: %d, attempt %d/%d)",
 		job.ID, job.JobID, job.RetryCount+1, job.MaxRetryCount+1)
 
+	// Check if there's already an execution in progress for this job
+	existingExecution, err := ws.storage.GetJobExecutionInProgress(job.JobID)
+	if err != nil {
+		log.Printf("Failed to check for existing execution for job %s: %v", job.ID, err)
+		ws.jobQueue.FailJob(job, fmt.Sprintf("Failed to check for existing execution: %v", err))
+		return
+	}
+
+	if existingExecution != nil {
+		log.Printf("Job %s (JobID: %d) already has an execution in progress, skipping", job.ID, job.JobID)
+		// Remove from processing queue since we're not processing it
+		if err := ws.jobQueue.client.SRem(ws.jobQueue.ctx, "job_queue:processing", job.ID).Err(); err != nil {
+			log.Printf("Warning: failed to remove job %s from processing queue: %v", job.ID, err)
+		}
+		return
+	}
+
 	// Create job execution record
 	execution := &models.JobExecution{
 		JobID:         job.JobID,
@@ -173,6 +192,7 @@ func (ws *WorkerService) processJob(job *models.QueueJob) {
 	}
 
 	// Handle job completion or failure
+	log.Printf("DEBUG: Job %s execution result: success=%v", job.ID, success)
 	if success {
 		ws.handleSuccessfulJob(job, execution)
 	} else {
@@ -219,6 +239,7 @@ func (ws *WorkerService) handleSuccessfulJob(job *models.QueueJob, execution *mo
 
 // handleFailedJob handles a failed job execution
 func (ws *WorkerService) handleFailedJob(job *models.QueueJob, execution *models.JobExecution) {
+	log.Printf("DEBUG: handleFailedJob called for job %s (JobID: %d)", job.ID, job.JobID)
 	errorMsg := "API call failed"
 	if execution.Error != "" {
 		errorMsg = execution.Error
@@ -226,6 +247,14 @@ func (ws *WorkerService) handleFailedJob(job *models.QueueJob, execution *models
 
 	if err := ws.jobQueue.FailJob(job, errorMsg); err != nil {
 		log.Printf("Failed to handle failed job %s: %v", job.ID, err)
+	}
+
+	// Notify scheduler about job failure
+	log.Printf("Notifying scheduler about job failure %s (JobID: %d)", job.ID, job.JobID)
+	if err := ws.scheduler.HandleJobCompletion(job.JobID, false); err != nil {
+		log.Printf("Failed to notify scheduler about job failure %s: %v", job.ID, err)
+	} else {
+		log.Printf("Successfully notified scheduler about job failure %s", job.ID)
 	}
 }
 

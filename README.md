@@ -63,18 +63,19 @@ job_scheduler/
 ### Docker (Recommended)
 
 ```bash
-# Start all services
-docker-compose up -d
+# Build and start all services
+docker compose build
+docker compose up -d
 
 # Test
 curl http://localhost:8080/health
 curl http://localhost:8080/queue/stats
 
 # Scale workers
-docker-compose up -d --scale worker=5
+docker compose up -d --scale worker=5
 
 # Stop
-docker-compose down
+docker compose down
 ```
 
 ### Manual Setup

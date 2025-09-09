@@ -163,6 +163,21 @@ func (s *PostgresStorage) GetJobExecutions(jobID uint, limit int) ([]*models.Job
 	return executions, nil
 }
 
+func (s *PostgresStorage) GetJobExecutionInProgress(jobID uint) (*models.JobExecution, error) {
+	var execution models.JobExecution
+	result := s.db.Where("job_id = ? AND status IN (?)", jobID, []string{"SCHEDULED", "RUNNING"}).
+		Order("created_at DESC").
+		First(&execution)
+
+	if result.Error != nil {
+		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+			return nil, nil // No execution in progress
+		}
+		return nil, result.Error
+	}
+	return &execution, nil
+}
+
 // Error definitions
 var (
 	ErrJobNotFound         = errors.New("job not found")
