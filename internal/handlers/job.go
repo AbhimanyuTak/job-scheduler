@@ -11,11 +11,11 @@ import (
 )
 
 type JobHandler struct {
-	storage        *storage.PostgresStorage
+	storage        storage.Storage
 	scheduleParser *utils.ScheduleParser
 }
 
-func NewJobHandler(storage *storage.PostgresStorage) *JobHandler {
+func NewJobHandler(storage storage.Storage) *JobHandler {
 	return &JobHandler{
 		storage:        storage,
 		scheduleParser: utils.NewScheduleParser(),

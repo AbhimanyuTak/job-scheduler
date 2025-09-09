@@ -12,14 +12,14 @@ import (
 
 // SchedulerService handles job scheduling and queue management
 type SchedulerService struct {
-	storage        *storage.PostgresStorage
+	storage        storage.Storage
 	scheduleParser *utils.ScheduleParser
-	jobQueue       *JobQueueService
-	redisClient    *RedisClient
+	jobQueue       JobQueueServiceInterface
+	redisClient    RedisClientInterface
 }
 
 // NewSchedulerService creates a new scheduler service
-func NewSchedulerService(storage *storage.PostgresStorage, redisClient *RedisClient) *SchedulerService {
+func NewSchedulerService(storage storage.Storage, redisClient RedisClientInterface) *SchedulerService {
 	jobQueue := NewJobQueueService(redisClient)
 	return &SchedulerService{
 		storage:        storage,

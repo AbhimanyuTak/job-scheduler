@@ -12,7 +12,7 @@ import (
 
 // JobQueueService handles job queuing operations using Redis
 type JobQueueService struct {
-	redisClient *RedisClient
+	redisClient RedisClientInterface
 	client      *redis.Client
 	ctx         context.Context
 }
@@ -27,7 +27,7 @@ const (
 )
 
 // NewJobQueueService creates a new job queue service
-func NewJobQueueService(redisClient *RedisClient) *JobQueueService {
+func NewJobQueueService(redisClient RedisClientInterface) *JobQueueService {
 	return &JobQueueService{
 		redisClient: redisClient,
 		client:      redisClient.GetClient(),

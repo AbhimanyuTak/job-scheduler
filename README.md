@@ -39,335 +39,108 @@ job_scheduler/
 
 ## Quick Start
 
-### Option 1: Docker (Recommended)
-
-#### Production Setup
-
-1. **Start the complete application stack**:
-   ```bash
-   # Build and start all services (PostgreSQL + Redis + API Server + Workers)
-   docker-compose up -d
-   
-   # View logs
-   docker-compose logs -f scheduler
-   docker-compose logs -f worker
-   ```
-
-2. **Test the application**:
-   ```bash
-   # Health check
-   curl http://localhost:8080/health
-   
-   # Check queue statistics
-   curl http://localhost:8080/queue/stats
-   
-   # Create a test job
-   curl -X POST http://localhost:8080/api/v1/jobs \
-     -H "Content-Type: application/json" \
-     -d '{
-       "name": "Test Job",
-       "description": "A test job",
-       "cronExpression": "0 */5 * * * *",
-       "httpMethod": "POST",
-       "httpUrl": "https://httpbin.org/post",
-       "executionType": "AT_LEAST_ONCE"
-     }'
-   ```
-
-3. **Scale workers**:
-   ```bash
-   # Scale workers to 5 replicas
-   docker-compose up -d --scale worker=5
-   
-   # Check running services
-   docker-compose ps
-   ```
-
-4. **Stop the application**:
-   ```bash
-   docker-compose down
-   ```
-
-#### Development Setup
-
-1. **Start development environment**:
-   ```bash
-   # Start with live reloading and debug mode
-   docker-compose -f docker-compose.dev.yml up -d
-   
-   # View logs
-   docker-compose -f docker-compose.dev.yml logs -f scheduler
-   docker-compose -f docker-compose.dev.yml logs -f worker
-   ```
-
-2. **Development features**:
-   - Live code reloading (volume mount)
-   - Debug logging enabled
-   - Hot reloading for faster development
-   - 2 worker replicas for testing
-
-3. **Stop development environment**:
-   ```bash
-   docker-compose -f docker-compose.dev.yml down
-   ```
-
-#### Docker Commands Reference
+### Docker (Recommended)
 
 ```bash
-# Build the application images
-docker-compose build
-
-# Start services in background
+# Production
 docker-compose up -d
 
-# View logs
-docker-compose logs -f [service-name]
+# Development (with live reload)
+docker-compose -f docker-compose.dev.yml up -d
+
+# Test
+curl http://localhost:8080/health
+curl http://localhost:8080/queue/stats
 
 # Scale workers
 docker-compose up -d --scale worker=5
 
-# Stop services
+# Stop
 docker-compose down
-
-# Remove volumes (WARNING: deletes database and Redis data)
-docker-compose down -v
-
-# Rebuild and restart
-docker-compose up -d --build
-
-# Check service status
-docker-compose ps
-
-# Execute commands in running containers
-docker-compose exec scheduler /bin/sh
-docker-compose exec worker /bin/sh
-docker-compose exec redis redis-cli
 ```
 
-### Option 2: Manual Setup
+### Manual Setup
 
-1. **Setup PostgreSQL database** (see [Database Setup Guide](docs/database-setup.md))
-
-2. **Setup Redis server**:
-   ```bash
-   # Install Redis (Ubuntu/Debian)
-   sudo apt-get install redis-server
-   
-   # Start Redis
-   sudo systemctl start redis-server
-   ```
-
-3. **Build the applications**:
-   ```bash
-   # Build API server
-   go build ./cmd/scheduler
-   
-   # Build worker
-   go build ./cmd/worker
-   ```
-
-4. **Run the services**:
-   ```bash
-   # Terminal 1: Run API server
-   go run ./cmd/scheduler
-   
-   # Terminal 2: Run worker
-   go run ./cmd/worker
-   ```
-
-5. **Test endpoints**:
-   ```bash
-   # Health check
-   curl http://localhost:8080/health
-   
-   # Queue statistics
-   curl http://localhost:8080/queue/stats
-   ```
-
-## Docker Configuration
-
-### Architecture
-
-The application uses a distributed microservices architecture:
-
-- **PostgreSQL Database**: Persistent data storage with health checks
-- **Redis**: Message broker and job queue with persistence
-- **API Server**: Go application with REST API and job scheduling
-- **Worker Containers**: Scalable job processors (3 replicas in production, 2 in dev)
-- **Health Monitoring**: Built-in health checks for all services
-
-### Environment Variables
-
-The Docker setup supports all configuration options from `config.env.example`:
-
-#### Database Configuration
-- `DB_HOST`: Database host (default: `postgres` in Docker)
-- `DB_PORT`: Database port (default: `5432`)
-- `DB_USER`: Database user (default: `postgres`)
-- `DB_PASSWORD`: Database password (default: `password`)
-- `DB_NAME`: Database name (default: `job_scheduler`)
-- `DB_SSLMODE`: SSL mode (default: `disable`)
-
-#### Redis Configuration
-- `REDIS_HOST`: Redis host (default: `redis` in Docker)
-- `REDIS_PORT`: Redis port (default: `6379`)
-- `REDIS_PASSWORD`: Redis password (default: empty)
-- `REDIS_DB`: Redis database number (default: `0`)
-
-#### Server Configuration
-- `SERVER_PORT`: Application port (default: `8080`)
-- `SERVER_HOST`: Bind address (default: `0.0.0.0`)
-- `GIN_MODE`: Gin framework mode (`debug` for dev, `release` for prod)
-
-#### Worker Configuration
-- `WORKER_POOL_SIZE`: Number of concurrent workers per container (default: `10`)
-- `WORKER_HTTP_TIMEOUT`: HTTP request timeout in seconds (default: `90`)
-
-#### Logging Configuration
-- `LOG_LEVEL`: Log level (`debug`, `info`, `warn`, `error`)
-- `LOG_FORMAT`: Log format (`json` or `text`)
-
-#### Scheduler Configuration
-- `SCHEDULER_POLL_INTERVAL`: How often to check for jobs (default: `5s`)
-- `SCHEDULER_BATCH_SIZE`: Max jobs to process per batch (default: `100`)
-- `SCHEDULER_HTTP_TIMEOUT`: HTTP request timeout (default: `30s`)
-
-#### Environment
-- `ENVIRONMENT`: Environment type (`development` or `production`)
-
-### Docker Compose Files
-
-- **`docker-compose.yml`**: Production configuration
-  - Optimized for performance
-  - No volume mounts for code
-  - Production logging levels
-  - Restart policies
-  - 3 worker replicas with resource limits
-
-- **`docker-compose.dev.yml`**: Development configuration
-  - Live code reloading
-  - Debug logging
-  - Volume mounts for development
-  - Separate database and Redis volumes
-  - 2 worker replicas for testing
-
-### Health Checks
-
-All services include health checks:
-
-- **PostgreSQL**: Uses `pg_isready` to verify database connectivity
-- **Redis**: Uses `redis-cli ping` to verify Redis connectivity
-- **API Server**: HTTP health check at `/health` endpoint
-- **Workers**: Process health check using `pgrep`
-
-### Data Persistence
-
-- **Production**: 
-  - `postgres_data` volume for database persistence
-  - `redis_data` volume for Redis persistence
-- **Development**: 
-  - `postgres_dev_data` volume (separate from production)
-  - `redis_dev_data` volume (separate from production)
-
-### Security Features
-
-- Non-root user in all application containers
-- Minimal Alpine Linux base images
-- No unnecessary packages or tools
-- Proper file permissions
-- Resource limits for worker containers
-- Network isolation between services
+1. Setup PostgreSQL and Redis
+2. Build: `go build ./cmd/scheduler && go build ./cmd/worker`
+3. Run: `go run ./cmd/scheduler` and `go run ./cmd/worker`
 
 ## Configuration
 
-- **[Configuration Guide](docs/configuration.md)** - Environment variables and setup
-- **[Database Setup Guide](docs/database-setup.md)** - PostgreSQL setup instructions
-- **[Docker Setup Guide](docs/docker-setup.md)** - Complete Docker deployment guide
+### Environment Variables
 
-## API Documentation
+Key configuration options (see `config.env.example` for full list):
 
-- **[OpenAPI Specification](docs/api-spec.yaml)** - Complete API specification
-- **[API Endpoints](docs/api-endpoints.md)** - Quick reference for all endpoints
-- **[Postman Collection](docs/postman-collection.json)** - Import into Postman for testing
+- **Database**: `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, `DB_NAME`
+- **Redis**: `REDIS_HOST`, `REDIS_PORT`, `REDIS_PASSWORD`, `REDIS_DB`
+- **Server**: `SERVER_PORT` (default: 8080), `GIN_MODE`
+- **Worker**: `WORKER_POOL_SIZE` (default: 10), `WORKER_HTTP_TIMEOUT` (default: 90s)
+- **Scheduler**: `SCHEDULER_POLL_INTERVAL` (default: 5s), `SCHEDULER_BATCH_SIZE` (default: 100)
+
+### Docker Files
+
+- **`docker-compose.yml`**: Production (3 workers, optimized)
+- **`docker-compose.dev.yml`**: Development (2 workers, live reload)
+
+### Documentation
+
+- **[Configuration Guide](docs/configuration.md)** - Environment variables
+- **[Database Setup](docs/database-setup.md)** - PostgreSQL setup
+- **[Docker Setup](docs/docker-setup.md)** - Docker deployment
+- **[API Spec](docs/api-spec.yaml)** - OpenAPI specification
+- **[API Endpoints](docs/api-endpoints.md)** - Quick reference
 
 ### Key Endpoints
 
-- `GET /health` - Health check endpoint
-- `GET /queue/stats` - Queue statistics and monitoring
-- `POST /api/v1/jobs` - Create a new job
-- `GET /api/v1/jobs` - List all jobs
+- `GET /health` - Health check
+- `GET /queue/stats` - Queue statistics
+- `POST /api/v1/jobs` - Create job
+- `GET /api/v1/jobs` - List jobs
 - `GET /api/v1/jobs/{id}` - Get job details
-- `GET /api/v1/jobs/{id}/schedule` - Get job schedule
-- `GET /api/v1/jobs/{id}/history` - Get job execution history
+
+## Testing
+
+### Quick Commands
+
+```bash
+# Unit tests (fast, no external dependencies)
+make -f Makefile.test test-unit
+
+# Integration tests (requires running services)
+make -f Makefile.test test-integration
+
+# With coverage
+go test -v -short -run ".*Unit" ./internal/... -timeout=30s -cover
+```
+
+### Test Types
+
+- **Unit Tests**: Fast tests with mocks (models, handlers, services)
+- **Integration Tests**: Tests with real Redis/PostgreSQL
+- **E2E Tests**: Full system testing
+
+The test suite covers job lifecycle, queue operations, error handling, and performance.
 
 ## Redis Queue System
 
-### Architecture Overview
+Distributed job processing with Redis queues and scalable workers.
 
-The job scheduler uses a Redis-based queue system for distributed job processing:
+### Key Features
 
-1. **API Server**: Receives job requests and enqueues them in Redis
-2. **Redis Queue**: Stores jobs in different queues (ready, processing, completed, failed)
-3. **Worker Containers**: Process jobs from the queue with configurable concurrency
-4. **PostgreSQL**: Stores job metadata and execution history
+- **Queue Types**: Ready, Processing, Completed, Failed, Retry
+- **Long-Running Tasks**: Up to 90 seconds duration
+- **Auto-Retry**: Exponential backoff for failed jobs
+- **Horizontal Scaling**: Scale workers based on demand
 
-### Queue Types
+### Commands
 
-- **Ready Queue**: Jobs ready for immediate processing
-- **Processing Queue**: Jobs currently being executed by workers
-- **Completed Queue**: Successfully completed jobs (last 1000)
-- **Failed Queue**: Permanently failed jobs
-- **Retry Queue**: Jobs scheduled for retry with exponential backoff
-
-### Scaling
-
-#### Horizontal Scaling
 ```bash
-# Scale workers based on demand
+# Scale workers
 docker-compose up -d --scale worker=10
 
-# Monitor queue depth
+# Monitor queue
 curl http://localhost:8080/queue/stats
 ```
-
-#### Auto-Scaling (Future)
-The system is designed to support auto-scaling based on:
-- Queue depth (number of pending jobs)
-- Average processing time
-- Worker CPU/memory usage
-- Failed job rate
-
-### Long-Running Tasks
-
-The system supports tasks up to 90 seconds duration:
-- Workers have configurable HTTP timeout (default: 90s)
-- Jobs persist in Redis during processing
-- Failed jobs are automatically retried with exponential backoff
-- Dead letter queue for permanently failed jobs
-
-### Monitoring
-
-#### Queue Statistics
-```bash
-# Get real-time queue statistics
-curl http://localhost:8080/queue/stats
-
-# Response example:
-{
-  "queue_stats": {
-    "ready": 5,
-    "processing": 3,
-    "completed": 150,
-    "retrying": 2
-  }
-}
-```
-
-#### Health Monitoring
-- Redis connectivity monitoring
-- Worker process health checks
-- Queue depth alerts (configurable)
-- Job success/failure rates
 
 ## Requirements
 
