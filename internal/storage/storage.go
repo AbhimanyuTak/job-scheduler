@@ -10,6 +10,7 @@ import (
 type Storage interface {
 	// Job operations
 	CreateJob(job *models.Job) error
+	CreateJobWithSchedule(job *models.Job, schedule *models.JobSchedule) error
 	GetJob(id uint) (*models.Job, error)
 	GetAllJobs() ([]*models.Job, error)
 

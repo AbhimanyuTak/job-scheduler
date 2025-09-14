@@ -21,7 +21,7 @@ func TestNewRedisClient(t *testing.T) {
 		os.Unsetenv("REDIS_DB")
 	}()
 
-	client, err := NewRedisClient()
+	client, err := NewRedisClient("localhost:6379", "", 0)
 	require.NoError(t, err)
 	require.NotNil(t, client)
 
@@ -49,7 +49,7 @@ func TestNewRedisClient_InvalidHost(t *testing.T) {
 		os.Unsetenv("REDIS_DB")
 	}()
 
-	client, err := NewRedisClient()
+	client, err := NewRedisClient("localhost:6379", "", 0)
 	require.Error(t, err)
 	assert.Nil(t, client)
 	assert.Contains(t, err.Error(), "failed to connect to Redis")
@@ -66,7 +66,7 @@ func TestNewRedisClient_InvalidPort(t *testing.T) {
 		os.Unsetenv("REDIS_DB")
 	}()
 
-	client, err := NewRedisClient()
+	client, err := NewRedisClient("localhost:6379", "", 0)
 	require.Error(t, err)
 	assert.Nil(t, client)
 	assert.Contains(t, err.Error(), "failed to connect to Redis")
@@ -83,7 +83,7 @@ func TestNewRedisClient_InvalidDB(t *testing.T) {
 		os.Unsetenv("REDIS_DB")
 	}()
 
-	client, err := NewRedisClient()
+	client, err := NewRedisClient("localhost:6379", "", 0)
 	require.Error(t, err)
 	assert.Nil(t, client)
 	assert.Contains(t, err.Error(), "invalid REDIS_DB value")
@@ -100,7 +100,7 @@ func TestRedisClient_Health(t *testing.T) {
 		os.Unsetenv("REDIS_DB")
 	}()
 
-	client, err := NewRedisClient()
+	client, err := NewRedisClient("localhost:6379", "", 0)
 	require.NoError(t, err)
 	defer client.Close()
 
@@ -120,7 +120,7 @@ func TestRedisClient_GetClient(t *testing.T) {
 		os.Unsetenv("REDIS_DB")
 	}()
 
-	client, err := NewRedisClient()
+	client, err := NewRedisClient("localhost:6379", "", 0)
 	require.NoError(t, err)
 	defer client.Close()
 
@@ -145,7 +145,7 @@ func TestRedisClient_GetContext(t *testing.T) {
 		os.Unsetenv("REDIS_DB")
 	}()
 
-	client, err := NewRedisClient()
+	client, err := NewRedisClient("localhost:6379", "", 0)
 	require.NoError(t, err)
 	defer client.Close()
 
@@ -172,7 +172,7 @@ func TestRedisClient_Close(t *testing.T) {
 		os.Unsetenv("REDIS_DB")
 	}()
 
-	client, err := NewRedisClient()
+	client, err := NewRedisClient("localhost:6379", "", 0)
 	require.NoError(t, err)
 
 	// Test that we can close the client
@@ -191,7 +191,7 @@ func TestRedisClient_DefaultValues(t *testing.T) {
 	os.Unsetenv("REDIS_DB")
 	os.Unsetenv("REDIS_PASSWORD")
 
-	client, err := NewRedisClient()
+	client, err := NewRedisClient("localhost:6379", "", 0)
 	require.NoError(t, err)
 	defer client.Close()
 
@@ -214,7 +214,7 @@ func TestRedisClient_WithPassword(t *testing.T) {
 	}()
 
 	// This should fail if Redis requires authentication
-	client, err := NewRedisClient()
+	client, err := NewRedisClient("localhost:6379", "", 0)
 	if err != nil {
 		// Expected if Redis requires authentication
 		assert.Contains(t, err.Error(), "failed to connect to Redis")
@@ -238,7 +238,7 @@ func TestRedisClient_ConnectionPool(t *testing.T) {
 		os.Unsetenv("REDIS_DB")
 	}()
 
-	client, err := NewRedisClient()
+	client, err := NewRedisClient("localhost:6379", "", 0)
 	require.NoError(t, err)
 	defer client.Close()
 
@@ -264,7 +264,7 @@ func TestRedisClient_Timeout(t *testing.T) {
 		os.Unsetenv("REDIS_DB")
 	}()
 
-	client, err := NewRedisClient()
+	client, err := NewRedisClient("localhost:6379", "", 0)
 	require.NoError(t, err)
 	defer client.Close()
 

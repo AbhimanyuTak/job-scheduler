@@ -41,6 +41,20 @@ func (m *MockStorage) CreateJob(job *models.Job) error {
 	return nil
 }
 
+func (m *MockStorage) CreateJobWithSchedule(job *models.Job, schedule *models.JobSchedule) error {
+	job.ID = m.nextID
+	job.CreatedAt = time.Now()
+	job.UpdatedAt = time.Now()
+	m.jobs[m.nextID] = job
+
+	schedule.JobID = m.nextID
+	schedule.CreatedAt = time.Now()
+	m.schedules[m.nextID] = schedule
+
+	m.nextID++
+	return nil
+}
+
 func (m *MockStorage) GetJob(id uint) (*models.Job, error) {
 	job, exists := m.jobs[id]
 	if !exists || !job.IsActive {

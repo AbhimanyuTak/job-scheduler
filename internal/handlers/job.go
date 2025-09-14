@@ -5,6 +5,8 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
+	"github.com/manyu/job-scheduler/internal/errors"
+	"github.com/manyu/job-scheduler/internal/middleware"
 	"github.com/manyu/job-scheduler/internal/models"
 	"github.com/manyu/job-scheduler/internal/storage"
 	"github.com/manyu/job-scheduler/internal/utils"
@@ -42,27 +44,19 @@ type CreateJobResponse struct {
 func (h *JobHandler) CreateJob(c *gin.Context) {
 	var req CreateJobRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error":   "Invalid request payload",
-			"details": err.Error(),
-		})
+		middleware.HandleError(c, errors.ErrInvalidRequest.WithDetails(err.Error()))
 		return
 	}
 
 	// Validate job type
 	if req.Type != models.AT_LEAST_ONCE && req.Type != models.AT_MOST_ONCE {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Invalid job type. Must be AT_LEAST_ONCE or AT_MOST_ONCE",
-		})
+		middleware.HandleError(c, errors.ErrInvalidJobType)
 		return
 	}
 
 	// Validate CRON schedule format
 	if err := h.scheduleParser.ValidateSchedule(req.Schedule); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error":   "Invalid schedule format",
-			"details": err.Error(),
-		})
+		middleware.HandleError(c, errors.ErrInvalidSchedule.WithDetails(err.Error()))
 		return
 	}
 
@@ -82,36 +76,20 @@ func (h *JobHandler) CreateJob(c *gin.Context) {
 		IsActive:      true,
 	}
 
-	// Save job to database
-	if err := h.storage.CreateJob(job); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error":   "Failed to create job",
-			"details": err.Error(),
-		})
-		return
-	}
-
-	// Create job schedule for both recurring and non-recurring jobs
-	// For non-recurring jobs, we still need to schedule the first execution
+	// Calculate next execution time for the schedule
 	nextExecutionTime, err := h.scheduleParser.CalculateNextExecutionFromNow(req.Schedule)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error":   "Failed to calculate next execution time",
-			"details": err.Error(),
-		})
+		middleware.HandleError(c, errors.Wrap(err, "SCHEDULE_CALCULATION_ERROR", "Failed to calculate next execution time", http.StatusInternalServerError))
 		return
 	}
 
 	schedule := &models.JobSchedule{
-		JobID:             job.ID,
 		NextExecutionTime: nextExecutionTime,
 	}
 
-	if err := h.storage.CreateJobSchedule(schedule); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error":   "Failed to create job schedule",
-			"details": err.Error(),
-		})
+	// Create job and schedule in a transaction to ensure data consistency
+	if err := h.storage.CreateJobWithSchedule(job, schedule); err != nil {
+		middleware.HandleError(c, errors.Wrap(err, "JOB_CREATION_ERROR", "Failed to create job and schedule", http.StatusInternalServerError))
 		return
 	}
 

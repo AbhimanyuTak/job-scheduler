@@ -2,6 +2,7 @@ package storage
 
 import (
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/manyu/job-scheduler/internal/database"
@@ -13,9 +14,9 @@ type PostgresStorage struct {
 	db *gorm.DB
 }
 
-func NewPostgresStorage() *PostgresStorage {
+func NewPostgresStorage(dbService *database.DatabaseService) *PostgresStorage {
 	return &PostgresStorage{
-		db: database.DB,
+		db: dbService.GetDB(),
 	}
 }
 
@@ -26,6 +27,26 @@ func (s *PostgresStorage) CreateJob(job *models.Job) error {
 		return result.Error
 	}
 	return nil
+}
+
+// CreateJobWithSchedule creates a job and its schedule in a transaction
+func (s *PostgresStorage) CreateJobWithSchedule(job *models.Job, schedule *models.JobSchedule) error {
+	return s.db.Transaction(func(tx *gorm.DB) error {
+		// Create job
+		if err := tx.Create(job).Error; err != nil {
+			return fmt.Errorf("failed to create job: %w", err)
+		}
+
+		// Set job ID for schedule
+		schedule.JobID = job.ID
+
+		// Create schedule
+		if err := tx.Create(schedule).Error; err != nil {
+			return fmt.Errorf("failed to create job schedule: %w", err)
+		}
+
+		return nil
+	})
 }
 
 func (s *PostgresStorage) GetJob(id uint) (*models.Job, error) {

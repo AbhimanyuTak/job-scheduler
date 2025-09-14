@@ -23,7 +23,7 @@ func setupTestRedisClient(t *testing.T) *RedisClient {
 		os.Unsetenv("REDIS_DB")
 	}()
 
-	client, err := NewRedisClient()
+	client, err := NewRedisClient("localhost:6379", "", 0)
 	require.NoError(t, err)
 
 	// Clear the test database

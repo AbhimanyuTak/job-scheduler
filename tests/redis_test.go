@@ -19,7 +19,7 @@ type RedisTestClient struct {
 
 // NewRedisTestClient creates a new Redis test client
 func NewRedisTestClient(t *testing.T) *RedisTestClient {
-	redisClient, err := services.NewRedisClient()
+	redisClient, err := services.NewRedisClient("localhost:6379", "", 0)
 	require.NoError(t, err, "Failed to create Redis client")
 
 	jobQueue := services.NewJobQueueService(redisClient)

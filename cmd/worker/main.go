@@ -19,15 +19,12 @@ func main() {
 		log.Fatalf("Failed to load configuration: %v", err)
 	}
 
-	// Initialize database connection with config
-	if err := database.Connect(cfg.Database.GetDSN()); err != nil {
+	// Initialize database service
+	dbService, err := database.NewDatabaseService(cfg.Database.GetDSN())
+	if err != nil {
 		log.Fatalf("Failed to connect to database: %v", err)
 	}
-
-	// Auto-migrate database schema
-	if err := database.AutoMigrate(); err != nil {
-		log.Fatalf("Failed to migrate database: %v", err)
-	}
+	defer dbService.Close()
 
 	// Initialize Redis client with config
 	redisClient, err := services.NewRedisClient(cfg.Redis.GetRedisAddr(), cfg.Redis.Password, cfg.Redis.DB)
@@ -37,7 +34,7 @@ func main() {
 	defer redisClient.Close()
 
 	// Initialize PostgreSQL storage
-	postgresStorage := storage.NewPostgresStorage()
+	postgresStorage := storage.NewPostgresStorage(dbService)
 
 	// Initialize job queue service
 	jobQueue := services.NewJobQueueService(redisClient)

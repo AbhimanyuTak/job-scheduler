@@ -83,6 +83,20 @@ func (mr *MockStorageMockRecorder) CreateJobSchedule(schedule any) *gomock.Call 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateJobSchedule", reflect.TypeOf((*MockStorage)(nil).CreateJobSchedule), schedule)
 }
 
+// CreateJobWithSchedule mocks base method.
+func (m *MockStorage) CreateJobWithSchedule(job *models.Job, schedule *models.JobSchedule) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateJobWithSchedule", job, schedule)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// CreateJobWithSchedule indicates an expected call of CreateJobWithSchedule.
+func (mr *MockStorageMockRecorder) CreateJobWithSchedule(job, schedule any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateJobWithSchedule", reflect.TypeOf((*MockStorage)(nil).CreateJobWithSchedule), job, schedule)
+}
+
 // DeleteJobSchedule mocks base method.
 func (m *MockStorage) DeleteJobSchedule(jobID uint) error {
 	m.ctrl.T.Helper()
@@ -199,4 +213,19 @@ func (m *MockStorage) UpdateJobSchedule(jobID uint, nextExecutionTime time.Time)
 func (mr *MockStorageMockRecorder) UpdateJobSchedule(jobID, nextExecutionTime any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateJobSchedule", reflect.TypeOf((*MockStorage)(nil).UpdateJobSchedule), jobID, nextExecutionTime)
+}
+
+// GetJobExecutionInProgress mocks base method.
+func (m *MockStorage) GetJobExecutionInProgress(jobID uint) (*models.JobExecution, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetJobExecutionInProgress", jobID)
+	ret0, _ := ret[0].(*models.JobExecution)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetJobExecutionInProgress indicates an expected call of GetJobExecutionInProgress.
+func (mr *MockStorageMockRecorder) GetJobExecutionInProgress(jobID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetJobExecutionInProgress", reflect.TypeOf((*MockStorage)(nil).GetJobExecutionInProgress), jobID)
 }
