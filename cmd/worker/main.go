@@ -1,24 +1,26 @@
 package main
 
 import (
-	"bufio"
 	"log"
 	"os"
 	"os/signal"
-	"strings"
 	"syscall"
 
+	"github.com/manyu/job-scheduler/internal/config"
 	"github.com/manyu/job-scheduler/internal/database"
 	"github.com/manyu/job-scheduler/internal/services"
 	"github.com/manyu/job-scheduler/internal/storage"
 )
 
 func main() {
-	// Load environment variables from config file
-	loadConfig()
+	// Load configuration
+	cfg, err := config.LoadConfig("")
+	if err != nil {
+		log.Fatalf("Failed to load configuration: %v", err)
+	}
 
-	// Initialize database connection
-	if err := database.Connect(); err != nil {
+	// Initialize database connection with config
+	if err := database.Connect(cfg.Database.GetDSN()); err != nil {
 		log.Fatalf("Failed to connect to database: %v", err)
 	}
 
@@ -27,8 +29,8 @@ func main() {
 		log.Fatalf("Failed to migrate database: %v", err)
 	}
 
-	// Initialize Redis client
-	redisClient, err := services.NewRedisClient()
+	// Initialize Redis client with config
+	redisClient, err := services.NewRedisClient(cfg.Redis.GetRedisAddr(), cfg.Redis.Password, cfg.Redis.DB)
 	if err != nil {
 		log.Fatalf("Failed to connect to Redis: %v", err)
 	}
@@ -63,35 +65,4 @@ func main() {
 	workerService.Stop()
 
 	log.Println("Worker service shutdown complete")
-}
-
-func loadConfig() {
-	// Try to load from config.env file
-	file, err := os.Open("config.env")
-	if err != nil {
-		log.Println("config.env file not found, using system environment variables")
-		return
-	}
-	defer file.Close()
-
-	scanner := bufio.NewScanner(file)
-	for scanner.Scan() {
-		line := strings.TrimSpace(scanner.Text())
-		if line == "" || strings.HasPrefix(line, "#") {
-			continue
-		}
-
-		parts := strings.SplitN(line, "=", 2)
-		if len(parts) == 2 {
-			key := strings.TrimSpace(parts[0])
-			value := strings.TrimSpace(parts[1])
-			os.Setenv(key, value)
-		}
-	}
-
-	if err := scanner.Err(); err != nil {
-		log.Printf("Error reading config.env: %v", err)
-	} else {
-		log.Println("Configuration loaded from config.env")
-	}
 }

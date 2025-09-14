@@ -4,8 +4,6 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"os"
-	"strconv"
 	"time"
 
 	"github.com/redis/go-redis/v9"
@@ -17,23 +15,11 @@ type RedisClient struct {
 	ctx    context.Context
 }
 
-// NewRedisClient creates a new Redis client with configuration from environment variables
-func NewRedisClient() (*RedisClient, error) {
-	// Get Redis configuration from environment variables
-	host := getEnvOrDefault("REDIS_HOST", "localhost")
-	port := getEnvOrDefault("REDIS_PORT", "6379")
-	password := getEnvOrDefault("REDIS_PASSWORD", "")
-	dbStr := getEnvOrDefault("REDIS_DB", "0")
-
-	// Parse database number
-	db, err := strconv.Atoi(dbStr)
-	if err != nil {
-		return nil, fmt.Errorf("invalid REDIS_DB value: %w", err)
-	}
-
+// NewRedisClient creates a new Redis client with provided configuration
+func NewRedisClient(addr, password string, db int) (*RedisClient, error) {
 	// Create Redis client
 	rdb := redis.NewClient(&redis.Options{
-		Addr:     fmt.Sprintf("%s:%s", host, port),
+		Addr:     addr,
 		Password: password,
 		DB:       db,
 		// Connection pool settings
@@ -56,7 +42,7 @@ func NewRedisClient() (*RedisClient, error) {
 		return nil, fmt.Errorf("failed to connect to Redis: %w", err)
 	}
 
-	log.Printf("Connected to Redis at %s:%s (DB: %d)", host, port, db)
+	log.Printf("Connected to Redis at %s (DB: %d)", addr, db)
 
 	return &RedisClient{
 		client: rdb,
@@ -82,12 +68,4 @@ func (rc *RedisClient) Close() error {
 // Health checks if Redis is healthy
 func (rc *RedisClient) Health() error {
 	return rc.client.Ping(rc.ctx).Err()
-}
-
-// getEnvOrDefault gets an environment variable or returns a default value
-func getEnvOrDefault(key, defaultValue string) string {
-	if value := os.Getenv(key); value != "" {
-		return value
-	}
-	return defaultValue
 }
