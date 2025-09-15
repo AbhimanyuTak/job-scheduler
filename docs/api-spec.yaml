@@ -285,6 +285,54 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
 
+  /queue/stats:
+    get:
+      summary: Get Queue Statistics
+      description: Get current statistics about job queues (ready, processing, completed, retrying)
+      operationId: getQueueStats
+      tags:
+        - Queue
+      responses:
+        '200':
+          description: Queue statistics
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  queue_stats:
+                    type: object
+                    properties:
+                      ready:
+                        type: integer
+                        description: Number of jobs ready for execution
+                        example: 5
+                      processing:
+                        type: integer
+                        description: Number of jobs currently being processed
+                        example: 3
+                      completed:
+                        type: integer
+                        description: Number of completed jobs (last 1000 kept)
+                        example: 150
+                      retrying:
+                        type: integer
+                        description: Number of jobs waiting to retry
+                        example: 2
+                    required:
+                      - ready
+                      - processing
+                      - completed
+                      - retrying
+                required:
+                  - queue_stats
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
 
 components:
   schemas:
@@ -544,3 +592,5 @@ tags:
     description: Health check endpoints
   - name: Jobs
     description: Job management operations
+  - name: Queue
+    description: Queue monitoring and statistics

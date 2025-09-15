@@ -150,6 +150,24 @@
           "response": []
         }
       ]
+    },
+    {
+      "name": "Queue",
+      "item": [
+        {
+          "name": "Get Queue Statistics",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/queue/stats",
+              "host": ["{{baseUrl}}"],
+              "path": ["queue", "stats"]
+            }
+          },
+          "response": []
+        }
+      ]
     }
   ]
 }
