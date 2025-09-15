@@ -43,7 +43,8 @@ job_scheduler/
 ├── internal/
 │   ├── models/             # Data models (Job, JobExecution, QueueJob)
 │   ├── storage/            # PostgreSQL storage layer
-│   ├── services/           # Core services (Scheduler, Worker, Redis, Queue)
+│   ├── services/           # Core services (Scheduler, Worker, Queue)
+│   ├── redis/              # Redis client and connection management
 │   ├── handlers/           # HTTP API handlers
 │   ├── database/           # Database connection management
 │   └── utils/              # Utility functions (schedule parsing)

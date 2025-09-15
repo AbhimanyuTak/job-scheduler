@@ -6,6 +6,7 @@ import (
 	"log"
 
 	"github.com/manyu/job-scheduler/internal/models"
+	redisclient "github.com/manyu/job-scheduler/internal/redis"
 	"github.com/manyu/job-scheduler/internal/storage"
 	"github.com/manyu/job-scheduler/internal/utils"
 )
@@ -15,11 +16,11 @@ type SchedulerService struct {
 	storage        storage.Storage
 	scheduleParser *utils.ScheduleParser
 	jobQueue       JobQueueServiceInterface
-	redisClient    RedisClientInterface
+	redisClient    redisclient.RedisClientInterface
 }
 
 // NewSchedulerService creates a new scheduler service
-func NewSchedulerService(storage storage.Storage, redisClient RedisClientInterface) *SchedulerService {
+func NewSchedulerService(storage storage.Storage, redisClient redisclient.RedisClientInterface) *SchedulerService {
 	jobQueue := NewJobQueueService(redisClient)
 	return &SchedulerService{
 		storage:        storage,

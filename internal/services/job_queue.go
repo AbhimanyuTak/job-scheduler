@@ -7,12 +7,13 @@ import (
 	"time"
 
 	"github.com/manyu/job-scheduler/internal/models"
+	redisclient "github.com/manyu/job-scheduler/internal/redis"
 	"github.com/redis/go-redis/v9"
 )
 
 // JobQueueService handles job queuing operations using Redis
 type JobQueueService struct {
-	redisClient RedisClientInterface
+	redisClient redisclient.RedisClientInterface
 	client      *redis.Client
 	ctx         context.Context
 }
@@ -27,7 +28,7 @@ const (
 )
 
 // NewJobQueueService creates a new job queue service
-func NewJobQueueService(redisClient RedisClientInterface) *JobQueueService {
+func NewJobQueueService(redisClient redisclient.RedisClientInterface) *JobQueueService {
 	return &JobQueueService{
 		redisClient: redisClient,
 		client:      redisClient.GetClient(),

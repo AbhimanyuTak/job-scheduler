@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/manyu/job-scheduler/internal/models"
-	"github.com/redis/go-redis/v9"
 )
 
 // SchedulerServiceInterface defines the interface for scheduler operations
@@ -22,12 +21,4 @@ type JobQueueServiceInterface interface {
 	CompleteJob(jobID string, result *models.QueueJobResult) error
 	GetQueueStats() (map[string]int64, error)
 	ProcessRetryQueue() error
-}
-
-// RedisClientInterface defines the interface for Redis operations
-type RedisClientInterface interface {
-	GetClient() *redis.Client
-	GetContext() context.Context
-	Close() error
-	Health() error
 }

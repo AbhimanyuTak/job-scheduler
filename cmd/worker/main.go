@@ -8,6 +8,7 @@ import (
 
 	"github.com/manyu/job-scheduler/internal/config"
 	"github.com/manyu/job-scheduler/internal/database"
+	"github.com/manyu/job-scheduler/internal/redis"
 	"github.com/manyu/job-scheduler/internal/services"
 	"github.com/manyu/job-scheduler/internal/storage"
 )
@@ -27,7 +28,7 @@ func main() {
 	defer dbService.Close()
 
 	// Initialize Redis client with config
-	redisClient, err := services.NewRedisClient(cfg.Redis.GetRedisAddr(), cfg.Redis.Password, cfg.Redis.DB)
+	redisClient, err := redis.NewRedisClient(cfg.Redis.GetRedisAddr(), cfg.Redis.Password, cfg.Redis.DB)
 	if err != nil {
 		log.Fatalf("Failed to connect to Redis: %v", err)
 	}

@@ -1,4 +1,4 @@
-package services
+package redis
 
 import (
 	"context"
@@ -8,6 +8,14 @@ import (
 
 	"github.com/redis/go-redis/v9"
 )
+
+// RedisClientInterface defines the interface for Redis operations
+type RedisClientInterface interface {
+	GetClient() *redis.Client
+	GetContext() context.Context
+	Close() error
+	Health() error
+}
 
 // RedisClient wraps the Redis client with connection management
 type RedisClient struct {
